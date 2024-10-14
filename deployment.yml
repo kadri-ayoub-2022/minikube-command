@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-deployment
+  labels:
+    name: myapp
+    type: mongo-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: myapp
+      type: mongo-db
+  template:
+    metadata:
+      labels:
+        name: myapp
+        type: mongo-db
+    spec:
+      containers:
+        - name: mongodb
+          image: docker.io/mongo
+          resources:
+          ports:
+            - containerPort: 27017
+          volumeMounts :
+            - mountPath: "/data/db"
+              name: mongo-vol
+      volumes:
+        - name: mongo-vol
+          hostPath:
+            path: /data
+            type: Directory
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  type: ClusterIP
+  selector:
+    name: myapp
+    type: mongo-db
+  ports:
+    - port: 27017
+      targetPort: 27017
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-deploy
+  labels:
+    name: myapp
+    type: restapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: myapp
+      type: restapi
+  template:
+    metadata:
+      labels:
+        name: myapp
+        type: restapi
+    spec:
+      containers:
+        - name: simple-api
+          image: docker.io/kadriayoub/learn-kube:2.0
+          resources:
+          ports:
+            - containerPort: 3000
+          env:
+            - name: FIRSTNAME
+              value: kadri
+            - name: ll
+              value: kj
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 3000
+          #     httpHeaders:
+          #     - name: Custom-Header
+          #       value: Awesome
+          #   initialDelaySeconds: 3
+          #   periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-server
+spec:
+  type: NodePort
+  ports:
+    - port: 8081
+      targetPort: 3000
+  selector:
+    name: myapp   
+    type: restapi
+---
+apiVersion: v1
+kind: ConfigMap # it is used for environment variable 
+metadata:
+  name: myapp
+data:
+  key: value
+---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: mypv
+# spec:
+#   capacity:
+#     storage: 1GI
+#   volumeMode: Filesystem
+#   accessModes:
+#     - ReadWriteOnce
+#   persistentVolumeReclaimPolicy: Recycle
+#   storageClassName: normal
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: mypvc
+# spec:
+#   resources:
+#     requests:
+#       storage: <Size>
+#   volumeMode: Filesystem
+#   accessModes:
+#     - ReadWriteOnce
+
+
+
+

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: myapp-replicaset
+
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      name: myapp   # This should match exactly with the labels in the template
+      type: restapi
+  template:
+    metadata:
+      labels:
+        name: myapp   # This should match exactly with the selector
+        type: restapi
+    spec:
+      containers:
+        - name: simple-api
+          image: docker.io/kadriayoub/learn-kube:1.0
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 3000
+
+
+  
